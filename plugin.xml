@@ -80,8 +80,10 @@
     </config-file>
     <source-file src="src/ios/AppDelegate+notification.m"/>
     <source-file src="src/ios/PushPlugin.m"/>
+    <source-file src="src/ios/UNUserNotificationCenter+Delegates.m"/>
     <header-file src="src/ios/AppDelegate+notification.h"/>
     <header-file src="src/ios/PushPlugin.h"/>
+    <header-file src="src/ios/UNUserNotificationCenter+Delegates.h"/>
     <framework src="FirebaseMessaging" type="podspec" spec="~> 2.0.0"/>
     <framework src="PushKit.framework"/>
   </platform>
