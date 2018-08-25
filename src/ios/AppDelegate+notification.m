@@ -57,7 +57,7 @@ NSString *const pushPluginApplicationDidBecomeActiveNotification = @"pushPluginA
 {
     UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
     center.delegate = self;
-    
+
     [[NSNotificationCenter defaultCenter]addObserver:self
                                             selector:@selector(pushPluginOnApplicationDidBecomeActive:)
                                                 name:UIApplicationDidBecomeActiveNotification
@@ -83,7 +83,7 @@ NSString *const pushPluginApplicationDidBecomeActiveNotification = @"pushPluginA
 
     // app is in the background or inactive, so only call notification callback if this is a silent push
     if (application.applicationState != UIApplicationStateActive) {
-        
+
         NSLog(@"app in-active");
 
         // do some convoluted logic to find out if this should be a silent push.
@@ -126,9 +126,9 @@ NSString *const pushPluginApplicationDidBecomeActiveNotification = @"pushPluginA
             NSLog(@"just put it in the shade");
             //save it for later
             self.launchNotification = userInfo;
+            completionHandler(UIBackgroundFetchResultNewData);
         }
-        
-        completionHandler(UIBackgroundFetchResultNewData);
+
     } else {
         completionHandler(UIBackgroundFetchResultNoData);
     }
@@ -137,7 +137,7 @@ NSString *const pushPluginApplicationDidBecomeActiveNotification = @"pushPluginA
 - (void)checkUserHasRemoteNotificationsEnabledWithCompletionHandler:(nonnull void (^)(BOOL))completionHandler
 {
     [[UNUserNotificationCenter currentNotificationCenter] getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings * _Nonnull settings) {
-        
+
         switch (settings.authorizationStatus)
         {
             case UNAuthorizationStatusDenied:
@@ -154,6 +154,14 @@ NSString *const pushPluginApplicationDidBecomeActiveNotification = @"pushPluginA
 - (void)pushPluginOnApplicationDidBecomeActive:(NSNotification *)notification {
 
     NSLog(@"active");
+    
+    NSString *firstLaunchKey = @"firstLaunchKey";
+    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@"phonegap-plugin-push"];
+    if (![defaults boolForKey:firstLaunchKey]) {
+        NSLog(@"application first launch: remove badge icon number");
+        [defaults setBool:YES forKey:firstLaunchKey];
+        [[UIApplication sharedApplication] setApplicationIconBadgeNumber:0];
+    }
 
     UIApplication *application = notification.object;
 
@@ -174,7 +182,7 @@ NSString *const pushPluginApplicationDidBecomeActiveNotification = @"pushPluginA
         self.coldstart = [NSNumber numberWithBool:NO];
         [pushHandler performSelectorOnMainThread:@selector(notificationReceived) withObject:pushHandler waitUntilDone:NO];
     }
-    
+
     [[NSNotificationCenter defaultCenter] postNotificationName:pushPluginApplicationDidBecomeActiveNotification object:nil];
 }
 
@@ -188,7 +196,7 @@ NSString *const pushPluginApplicationDidBecomeActiveNotification = @"pushPluginA
     pushHandler.notificationMessage = notification.request.content.userInfo;
     pushHandler.isInline = YES;
     [pushHandler notificationReceived];
-    
+
     completionHandler(UNNotificationPresentationOptionNone);
 }
 
@@ -201,7 +209,7 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
     NSMutableDictionary *userInfo = [response.notification.request.content.userInfo mutableCopy];
     [userInfo setObject:response.actionIdentifier forKey:@"actionCallback"];
     NSLog(@"Push Plugin userInfo %@", userInfo);
-    
+
     switch ([UIApplication sharedApplication].applicationState) {
         case UIApplicationStateActive:
         {
@@ -226,13 +234,13 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
                     completionHandler();
                 });
             };
-            
+
             PushPlugin *pushHandler = [self getCommandInstance:@"PushNotification"];
-            
+
             if (pushHandler.handlerObj == nil) {
                 pushHandler.handlerObj = [NSMutableDictionary dictionaryWithCapacity:2];
             }
-            
+
             id notId = [userInfo objectForKey:@"notId"];
             if (notId != nil) {
                 NSLog(@"Push Plugin notId %@", notId);
@@ -241,10 +249,10 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
                 NSLog(@"Push Plugin notId handler");
                 [pushHandler.handlerObj setObject:safeHandler forKey:@"handler"];
             }
-            
+
             pushHandler.notificationMessage = userInfo;
             pushHandler.isInline = NO;
-            
+
             [pushHandler performSelectorOnMainThread:@selector(notificationReceived) withObject:pushHandler waitUntilDone:NO];
         }
     }

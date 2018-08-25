@@ -1,22 +1,23 @@
 # API
 
-* [.init()](#pushnotificationinitoptions)
-* [.hasPermission()](#pushnotificationhaspermissionsuccesshandler)
-* [.createChannel() - Android only](#pushnotificationcreatechannel)
-* [.deleteChannel() - Android only](#pushnotificationdeletechannel)
-* [.listChannels() - Android only](#pushnotificationlistchannels)
-* [push.on()](#pushonevent-callback)
-  * [push.on('registration')](#pushonregistration-callback)
-  * [push.on('notification')](#pushonnotification-callback)
-  * [push.on('error')](#pushonerror-callback)
-* [push.off()](#pushoffevent-callback)
-* [push.unregister()](#pushunregistersuccesshandler-errorhandler-topics)
-* [push.subscribe()](#pushsubscribetopic-successhandler-errorhandler)
-* [push.unsubscribe()](#pushunsubscribetopic-successhandler-errorhandler)
-* [push.setApplicationIconBadgeNumber() - iOS & Android only](#pushsetapplicationiconbadgenumbersuccesshandler-errorhandler-count---ios--android-only)
-* [push.getApplicationIconBadgeNumber() - iOS & Android only](#pushgetapplicationiconbadgenumbersuccesshandler-errorhandler---ios--android-only)
-* [push.finish() - iOS only](#pushfinishsuccesshandler-errorhandler-id---ios-only)
-* [push.clearAllNotifications() - iOS & Android only](#pushclearallnotificationssuccesshandler-errorhandler---ios--android-only)
+- [.init()](#pushnotificationinitoptions)
+- [.hasPermission()](#pushnotificationhaspermissionsuccesshandler)
+- [.createChannel() - Android only](#pushnotificationcreatechannel)
+- [.deleteChannel() - Android only](#pushnotificationdeletechannel)
+- [.listChannels() - Android only](#pushnotificationlistchannels)
+- [push.on()](#pushonevent-callback)
+  - [push.on('registration')](#pushonregistration-callback)
+  - [push.on('notification')](#pushonnotification-callback)
+  - [push.on('error')](#pushonerror-callback)
+- [push.off()](#pushoffevent-callback)
+- [push.unregister()](#pushunregistersuccesshandler-errorhandler-topics)
+- [push.subscribe()](#pushsubscribetopic-successhandler-errorhandler)
+- [push.unsubscribe()](#pushunsubscribetopic-successhandler-errorhandler)
+- [push.setApplicationIconBadgeNumber() - iOS & Android only](#pushsetapplicationiconbadgenumbersuccesshandler-errorhandler-count---ios--android-only)
+- [push.getApplicationIconBadgeNumber() - iOS & Android only](#pushgetapplicationiconbadgenumbersuccesshandler-errorhandler---ios--android-only)
+- [push.finish() - iOS only](#pushfinishsuccesshandler-errorhandler-id---ios-only)
+- [push.clearAllNotifications() - iOS & Android only](#pushclearallnotificationssuccesshandler-errorhandler---ios--android-only)
+- [push.clearNotification() - iOS & Android only](#pushclearnotificationid-successhandler-errorhandler---ios--android-only)
 
 ## PushNotification.init(options)
 
@@ -203,12 +204,26 @@ PushNotification.createChannel(
   {
     id: 'testchannel1',
     description: 'My first test channel',
-    importance: 3
+    importance: 3,
+    vibration: true
   }
 );
 ```
 
-The above will create a channel for your app. You'll need to provide the `id`, `description` and `importance` properties. The importance property goes from 1 = Lowest, 2 = Low, 3 = Normal, 4 = High and 5 = Highest.
+The above will create a channel for your app. You'll need to provide the `id`, `description` and `importance` properties. 
+
+A default channel with the id "PushPluginChannel" is created automatically. To make changes to the default channel's settings, create a channel with the id "PushPluginChannel" before calling the PushNotification.init function.
+
+### Channel properties
+
+| Property                         | Type      | Description                                                                                                                                                                                                                         |
+| -------------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                             | `String`  | The id of the channel. Must be unique per package. The value may be truncated if it is too long.                                                                                                                                    |
+| `description`                    | `String`  | The user visible name of the channel. The recommended maximum length is 40 characters; the value may be truncated if it is too long.                                                                                                |
+| `importance`                     | `Int`     | The importance of the channel. This controls how interruptive notifications posted to this channel are. The importance property goes from 1 = Lowest, 2 = Low, 3 = Normal, 4 = High and 5 = Highest.                                |            
+| `sound`                          | `String`  | The name of the sound file to be played upon receipt of the notification in this channel. Cannot be changed after channel is created.                                                                                               |
+| `vibration`                      | `Boolean` or `Array` | Boolean sets whether notification posted to this channel should vibrate. Array sets custom vibration pattern. Example - vibration: `[2000, 1000, 500, 500]`. Cannot be changed after channel is created.                 |
+| `visibility`                     | `Int`     | Sets whether notifications posted to this channel appear on the lockscreen or not, and if so, whether they appear in a redacted form. 0 = Private, 1 = Public, -1 = Secret.                                                         |
 
 ## PushNotification.deleteChannel(successHandler, failureHandler, channelId)
 
@@ -340,6 +355,8 @@ push.on('notification', data => {
   console.log(data.additionalData);
 });
 ```
+
+Android quirk: Please note that some payloads may cause this event not to be always fired: [data vs notification payloads](https://github.com/phonegap/phonegap-plugin-push/blob/master/docs/PAYLOAD.md#notification-vs-data-payloads)
 
 ## push.on('error', callback)
 
@@ -557,10 +574,10 @@ Tells the OS to clear all notifications from the Notification Center
 
 ### Parameters
 
-| Parameter        | Type       | Default | Description                                                                             |
-| ---------------- | ---------- | ------- | --------------------------------------------------------------------------------------- |
-| `successHandler` | `Function` |         | Is called when the api successfully clears the notifications.                           |
-| `errorHandler`   | `Function` |         | Is called when the api encounters an error when attempting to clears the notifications. |
+Parameter | Type | Default | Description
+--------- | ---- | ------- | -----------
+`successHandler` | `Function` | | Is called when the api successfully clears the notifications.
+`errorHandler` | `Function` | | Is called when the api encounters an error when attempting to clear the notifications.
 
 ### Example
 
@@ -573,4 +590,26 @@ push.clearAllNotifications(
     console.log('error');
   }
 );
+```
+
+## push.clearNotification(id, successHandler, errorHandler) - iOS & Android only
+
+Tells the OS to clear the notification that corresponds to the id argument, from the Notification Center
+
+### Parameters
+
+Parameter | Type | Default | Description
+--------- | ---- | ------- | -----------
+`successHandler` | `Function` | | Is called when the api successfully clears the notification.
+`errorHandler` | `Function` | | Is called when the api encounters an error when attempting to clear the notification.
+`id` | `number` | | The ID of the notification that will be cleared. |
+
+### Example
+
+```javascript
+push.clearNotification(() => {
+	console.log('success');
+}, () => {
+	console.log('error');
+}, 145);
 ```
