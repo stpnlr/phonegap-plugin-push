@@ -20,7 +20,7 @@
  *  @warning This has only been tested with katzer/cordova-plugin-local-notifications@0.9.0-beta.2.
  *
  */
-@property (nonatomic, retain) NSMutableSet<id<UNUserNotificationCenterDelegate>> *delegates;
+@property (nonatomic, retain) NSHashTable<id<UNUserNotificationCenterDelegate>> *delegates;
 
 /*!
  *  @brief Always set self as the delegate, but add up to two other objects, one for this plugin and one for katzer/cordova-plugin-local-notifications.

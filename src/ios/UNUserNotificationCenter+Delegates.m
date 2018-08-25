@@ -59,29 +59,35 @@ static char delegatesKey;
         [self.delegates addObject:delegate];
     }
     
-    // Because the methods are exchanged, this will call the original method
-    [self swizzledSetDelegate:self];
+    if (self.delegate != self)
+    {
+        // Because the methods are exchanged, this will call the original method
+        [self swizzledSetDelegate:self];
+    }
 }
 
 
 #pragma mark - Accessors
 
-- (NSMutableSet<id<UNUserNotificationCenterDelegate>> *)delegates
+- (NSHashTable<id<UNUserNotificationCenterDelegate>> *)delegates
 {
-    NSMutableSet<id<UNUserNotificationCenterDelegate>> *delegates = objc_getAssociatedObject(self, &delegatesKey);
+    NSHashTable<id<UNUserNotificationCenterDelegate>> *delegates = objc_getAssociatedObject(self, &delegatesKey);
     if (delegates == nil)
     {
         // Only supports two delegates: one for this plugin and one for katzer/cordova-plugin-local-notifications
-        self.delegates = [NSMutableSet setWithCapacity:2];
+        self.delegates = [NSHashTable weakObjectsHashTable];
     }
     
     return objc_getAssociatedObject(self, &delegatesKey);
 }
 
-- (void)setDelegates:(NSMutableSet<id<UNUserNotificationCenterDelegate>> *)delegates
+- (void)setDelegates:(NSHashTable<id<UNUserNotificationCenterDelegate>> *)delegates
 {
     objc_setAssociatedObject(self, &delegatesKey, delegates, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
+
+
+#pragma mark - Public methods
 
 - (id<UNUserNotificationCenterDelegate>)getDelegateForNotificationTrigger:(UNNotificationTrigger *)trigger
 {
@@ -97,8 +103,8 @@ static char delegatesKey;
     }];
     
     // These will contain only one object
-    NSSet<id<UNUserNotificationCenterDelegate>> *localDelegates = [self.delegates filteredSetUsingPredicate:localPredicate];
-    NSSet<id<UNUserNotificationCenterDelegate>> *pushDelegates = [self.delegates filteredSetUsingPredicate:pushPredicate];
+    NSSet<id<UNUserNotificationCenterDelegate>> *localDelegates = [self.delegates.setRepresentation filteredSetUsingPredicate:localPredicate];
+    NSSet<id<UNUserNotificationCenterDelegate>> *pushDelegates = [self.delegates.setRepresentation filteredSetUsingPredicate:pushPredicate];
     
     return isPushNotification ? [pushDelegates anyObject] : [localDelegates anyObject];
 }
